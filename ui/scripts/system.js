@@ -1827,7 +1827,81 @@
 							notification: {
 								poll: pollAsyncJobResult
 							}
-						}
+						},
+            enable: {
+              label: 'label.action.enable.physical.network',
+              messages: {
+                confirm: function(args) {
+                  return 'message.action.enable.physical.network';
+                },
+                notification: function(args) {
+                  return 'label.action.enable.physical.network';
+                }
+              },
+              action: function(args) {
+                $.ajax({
+                  url: createURL('updatePhysicalNetwork'),
+                  data: {
+                    id: args.context.physicalNetworks[0].id,
+                    state: 'Enabled'
+                  },
+                  success: function(json) {
+                    args.response.success({
+                      _custom: {
+                        jobId: json.updatephysicalnetworkresponse.jobid,
+                        getUpdatedItem: function(json) {
+                          return {
+                            state: 'Enabled'
+                          };
+                        },
+                        getActionFilter: function() {
+                          return cloudStack.actionFilter.physicalNetwork;
+                        }
+                      }
+                    });
+                  },
+                  error: function(json) { args.response.error(parseXMLHttpResponse(json)); }
+                });
+              },
+              notification: { poll: pollAsyncJobResult }
+            },
+            disable: {
+              label: 'label.action.disable.physical.network',
+              messages: {
+                confirm: function(args) {
+                  return 'message.action.disable.physical.network';
+                },
+                notification: function(args) {
+                  return 'label.action.disable.physical.network';
+                }
+              },
+              action: function(args) {
+                $.ajax({
+                  url: createURL('updatePhysicalNetwork'),
+                  data: {
+                    id: args.context.physicalNetworks[0].id,
+                    state: 'Disabled'
+                  },
+                  success: function(json) {
+                    args.response.success({
+                      _custom: {
+                        jobId: json.updatephysicalnetworkresponse.jobid,
+                        getUpdatedItem: function(json) {
+                          return {
+                            state: 'Disabled'
+                          };
+                        },
+                        getActionFilter: function() {
+                          return cloudStack.actionFilter.physicalNetwork;
+                        }                                          
+                      }
+                    });
+                  },
+                  error: function(json) { args.response.error(parseXMLHttpResponse(json)); }
+                });
+              },
+              notification: { poll: pollAsyncJobResult }
+            }
 					}
         },
         dataProvider: function(args) {
@@ -1839,6 +1913,7 @@
             success: function(json) {
 						  physicalNetworkObjs = json.listphysicalnetworksresponse.physicalnetwork;
               args.response.success({
+                actionFilter: cloudStack.actionFilter.physicalNetwork,
                 data: json.listphysicalnetworksresponse.physicalnetwork
               });
             }
@@ -6192,17 +6267,17 @@
                     validation: { required: true }
                   },
                   vsmipaddress: {
-                    label: 'vSwitch IP Address',
+                    label: 'Nexus dvSwitch IP Address',
                     validation: { required: true },
                     isHidden: true
                   },
                   vsmusername: {
-                    label: 'vSwitch Username',
+                    label: 'Nexus dvSwitch Username',
                     validation: { required: true },
                     isHidden: true
                   },
                   vsmpassword: {
-                    label: 'vSwitch Password',
+                    label: 'Nexus dvSwitch Password',
                     validation: { required: true },
                     isPassword: true,
                     isHidden: true
@@ -9239,7 +9314,17 @@
 				}
 			);
 		}
-	}
-	
-	
+	};
+
+	cloudStack.actionFilter.physicalNetwork = function(args) {
+    var state = args.context.item.state;
+
+    if (state == 'Enabled') {
+      return ['disable', 'remove'];
+    } else if (state == 'Disabled') {
+      return ['enable', 'remove'];
+    }
+
+    return [];
+  };
 })($, cloudStack);
